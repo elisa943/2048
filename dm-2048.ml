@@ -44,6 +44,10 @@ close_graph;;
 clear_graph;;
 
 (* Structures pour les blocs : sous la forme d'un tableau (listes) *)
+cases = [ [0, 0, 0, 0],
+					[0, 0, 0, 0],
+					[0, 0, 0, 0],
+					[0, 0, 0, 0]  ]
 
 (* Fonctions qui modifie le tableau + score *)
 
@@ -57,16 +61,29 @@ clear_graph;;
 
 (* Fonction qui affiche l'écran de game over *)
 
+let test_vide tableau = 
+		for i = 0 to 3 do	
+			for j = 0 to 3 do
+				if tableau.(i)(j) != 0 then false
+		
+		true
+;;
+
+let game_over = clear_graph
+
+if test_vide tableau then game_over else __
+
 
 (* Fonction main *)
 
 	(* fonction qui détecte le déplacement du joueur (keyboard) *)
     
-key_pressed;;
+Key_pressed;;
 
 read_key;;
 
-sound;;
+let la3 = sound 440 1;;
+
     
     
     (* fonction *)
