@@ -1,49 +1,55 @@
+#load "graphics.cma";;
+
 open Graphics;;
 open Random;;
 open Array;;
 open List;;
 
 (* https://htmlcolors.com/google-color-picker *)
-(*https://caml.inria.fr/pub/docs/manual-caml-light/node16.html*)
+(* https://caml.inria.fr/pub/docs/manual-caml-light/node16.html
+	 https://musicordes.fr/tableau-frequences-notes/
+*)
 
-open_graph "";;
+open_graph ":0";;
 
 resize_window 800 600;;
 
 (* Fonctions pour tracer le background (titre, score) *)
 
-let bleu = rgb 15 140 171;;
+let bleu = rgb 38 92 153;;
 let rouge = rgb 224 20 64;;
+let vert = rgb 27 133 3;;
+let orange = rgb 222 118 20;;
 let la3 = sound 440 1;;
 
 
-let titre = 
+
+let background = 
+	set_color bleu;
+	fill_rect 0 0 800 600;
 	moveto 50 500;
 	set_color rouge;
-    set_text_size 50;
-	set_font "Avenir Next";
-	draw_string "2048";;
+  set_text_size 50;
+	draw_string "2048";
+	moveto 50 300;
+	set_text_size 30;
+	draw_string "Score :";
+	for i = 1 to 4 do
+		begin
+			moveto (199*i) 0;
+			lineto (199*i) 600;
+		end
+	done;;
+	
+	
+	
+	
 
 let point x y nb = 
 	(* sert à obtenir un certain paramètre d'un couple de coordonnées *)
 	if nb = 0 then x else y;;
 
-let f = 
-let ff = ref 3 in !ff;;
 
-
-
-let lignes = 
-	let set_line_width = 600 and moveto 200 0 in
-    for i = 1 to 4 do
-    	begin
-	    lineto 200*i (point current_point 1 + set_line_width);
-        moveto 200*i+200 (point current_point 1 + 200);
-        end
-    done;;
-    
-
-;;
 
 
 close_graph;;
@@ -52,11 +58,7 @@ clear_graph;;
 (* Structures pour les blocs : sous la forme d'un tableau (listes) *)
 
 let cases = make_matrix 4 4 0;;
-let detecte
 
-
-let f = 4
-;;
 (* Fonctions qui modifie le tableau + score *)
 
 (* Fonctions qui lit le tableau et l'affiche + affiche le background *)
@@ -95,6 +97,9 @@ let game =
     
 Key_pressed;; 
 read_key;;
+
+let ff = while true do
+	read_key;;
 
 let test = let boo = ref true in
 while boo do
