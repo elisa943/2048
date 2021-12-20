@@ -23,7 +23,7 @@ let la3 = sound 440 1;;
 (* Fonctions pour tracer le background (titre, score) *)
 
 
-let background = 
+let initialisation = 
 	open_graph ":0";
 	resize_window 800 600;
 	set_color rouge_fonce;
@@ -49,15 +49,29 @@ let background =
 	done;;
 
 fill_rect 0 0 160 150;;	
+
+(* Fonctions de générateurs aléatoires *)
+let deux_ou_quatre = if (int 2) = 0 then 2 else 4;;
 	
+(* problème si on a les mêmes coord *)
+let debut array array_prime = let a = int 4 and b = int 4
+		and c = int 4 and d = int 4 in
+		array.(a).(b) <- deux_ou_quatre;
+		array.(c).(d) <- deux_ou_quatre;
+		array_prime.(a).(b) <- 1;
+		array_prime.(c).(d) <- 1;
+		moveto 20 20;
+		set_color white;
+		draw_string (string_of_int a);
+		moveto 50 20;
+		set_color white;
+		draw_string (string_of_int b);;
 
-let point x y nb = 
-	(* sert à obtenir un certain paramètre d'un couple de coordonnées *)
-	if nb = 0 then x else y;;
+let test = 
+let f = make_matrix 4 4 0 and g = make_matrix 4 4 0 in
+debut f g;
+read_print f g;;
 
-
-close_graph;;
-clear_graph;;
 
 (* Structures pour les blocs : sous la forme d'un tableau (listes) *)
 
@@ -95,12 +109,11 @@ let read_print array array_prime =
 read_print (make_matrix 4 4 8) (make_matrix 4 4 1);;
 
 (* Fonctions qui choisit un emplacement libre random et choisit 2 ou 4 *)
+		
 
-let deux_ou_quatre = if (int 2) = 0 then 2 else 4;;
 
 		(* créé une matrice indiquant les emplacements remplis/vides *)
-let emplacements_libres array = 
-		let array_prime = make_matrix 4 4 0 in
+let emplacements_libres array array_prime = 
 		for i = 0 to 3 do	
 				for j = 0 to 3 do
 						if array.(i).(j) != 0 then array_prime.(i).(j) <- 1
@@ -108,6 +121,18 @@ let emplacements_libres array =
 				done
 		done
 		;;
+		
+let new_coord a b array array_prime = 
+		array.(a).(b) <- deux_ou_quatre;
+		array_prime.(a).(b) <- 1;;
+		
+let new_tile array array_prime= let t = ref true in 
+		while !t do
+				let a = zero_a_trois and b = zero_a_trois in
+				if array_prime.(a).(b) = 0 then new_coord a b array array_prime else ()
+		done;;
+		
+		
 
 (* Fonctions qui détecte le game over *)
 
@@ -130,8 +155,6 @@ let print_game_over =
     
 (* Fonction qui affiche un bouton "PLAY AGAIN" *)
 
-wait_next_event;;
-
 let detecte_play_again x y w h etat= 
 	x <= etat.mouse_x && etat.mouse_x >= x+w 
 	&& y <= etat.mouse_y && etat.mouse_y >= y+h && etat.button;;
@@ -147,18 +170,20 @@ let play_again =
 		then background else ();;
 
 
+
 (* Fonction main *)
 
 
 let game = 
-		let over = ref false and tableau = make_matrix 4 4 0 in
+		let over = ref false and tableau = make_matrix 4 4 0 and tableau_prime = make_matrix 4 4 0 in
 				while !over do 
 					begin 
-					background;
+					initialisation;
+					debut tableau;
 					
 		
 	
-    				if array_repli tableau then  else 4
+    			if array_rempli tableau_prime then print_game_over else ()
 					end
     done;;
 
