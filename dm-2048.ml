@@ -2,6 +2,7 @@
 open Graphics;;
 open Random;;
 open Array;;
+open Char;;
 
 (* 
 https://htmlcolors.com/google-color-picker
@@ -60,6 +61,19 @@ let son_collision nombre = match nombre with
 		| 2048 -> 
 		| 4096 -> 
 		;;
+		
+type direction = Haut | Bas | Gauche | Droite | Rien;;
+
+let conversion_ASCII_direction n = match n with 
+		| 90 -> Haut
+		| 122 -> Haut
+		| 81 -> Gauche
+		| 113 -> Gauche
+		| 83 -> Bas
+		| 115 -> Bas
+		| 68 -> Droite
+		| 100 -> Droite
+		| _ -> Rien;;
 
 (* Fonctions pour tracer le background (titre, score) *)
 
@@ -126,7 +140,7 @@ let print_cases x y nombre =
 
 		(* lit les tableaux, détermine ce qui doit être affiché
 		et appelle la fonction print_cases *)
-let read_print array array_prime = 
+let read_print_cases array array_prime = 
     (* affiche case et nombre*)
     for i = 0 to 3 do 
         for j = 0 to 3 do
@@ -139,13 +153,13 @@ let read_print array array_prime =
     done
     ;;
 		
-read_print (make_matrix 4 4 2048) (make_matrix 4 4 1);;
+read_print_cases (make_matrix 4 4 2048) (make_matrix 4 4 1);;
 
 (* Fonctions qui choisit un emplacement libre random et choisit 2 ou 4 *)
 		
 
 
-		(* update array_prime *)
+		(* update array_prime -> pas forcément nécessaire *)
 let update array array_prime = 
 		for i = 0 to 3 do	
 				for j = 0 to 3 do
@@ -154,7 +168,6 @@ let update array array_prime =
 				done
 		done
 		;;
-		
 		
 		(* choisit de façon random un emplacement libre *)
 		
@@ -167,8 +180,6 @@ let new_tile array array_prime = let boo = ref true in
 							array_prime.(a).(b) <- 1;
 							boo := false
 		done;;
-		
-		
 
 (* Fonctions qui détecte le game over *)
 
@@ -177,7 +188,19 @@ let condition_vide element = element = 1;;
 		(* renvoie true si le tableau est rempli = game over *)
 let array_rempli array_prime = 
 		for_all condition_vide array_prime;;
-
+		
+		(* renvoie true si le joueur n'a plus de choix possible 
+		A TERMINER *)
+let bloque array = 
+		for i = 0 to 3 do 
+				for j = 0 to 3 do 
+						if array.(i).(j) = array.(i).(j+1) then false
+						else if array.(j).(i) = array.(j).(i+1) then false;
+						
+				done
+		done
+		true;;
+		
 
 (* Fonction qui affiche l'écran de game over *)
 
@@ -189,7 +212,8 @@ let print_game_over n =
     set_color white;
     draw_string "GAME OVER";;
     
-(* Fonction qui affiche un bouton "PLAY AGAIN" *)
+(* Fonction qui affiche un bouton "PLAY AGAIN" 
+		A TERMINER*)
 
 let detecte_play_again x y w h etat= 
 	x <= etat.mouse_x && etat.mouse_x >= x+w 
@@ -203,18 +227,23 @@ let play_again =
 		set_color white;
 		draw_string "PLAY AGAIN";
 		if detecte_play_again 330 50 300 100 (wait_next_event Poll)
-		then background else ();;
+		then initialisation 0 else ();;
 
 
 
-	(* fonction qui détecte le déplacement du joueur (keyboard) *)
+(* Fonction qui détecte le déplacement du joueur (keyboard) *)
+let read_clavier = code (read_key());;
 
-read_key;;
-
-    
-  (* 4 directions : Nord Sud Est Ouest *)  
-
-type col = Avancement| Collision | Rien ;;
+let output_direction dir array array_prime = match dir with 
+		|	Haut -> haut array array_prime
+		| Bas -> bas array array_prime
+		| Gauche -> gauche array array_prime
+		| Droite -> droite array array_prime
+		| Rien -> ();;
+		
+let detecte_deplacement array array_prime = 
+		if key_pressed() then output_direction read_clavier array array_prime
+		else ();;
 
 let etat alpha beta a b = match alpha, beta with 
 		| 1, 0 -> array.(i).(j-1) <- array.(i).(j-1);
@@ -241,7 +270,7 @@ let bas array array_prime =
 		for j = 2 downto 0 do
 				for i = 0 to 3 do 
 				
-				done
+				done;
 		done;;
 		
 let gauche array array_prime = 
@@ -257,35 +286,32 @@ let droite array array_prime =
 				
 				done
 		done;;
-  
-  
-  
-type direction = Nord | Sud | Est | Ouest ;;
+	
 
-let trad_direction dir = match dir with
-		| Nord -> haut
-		| Sud -> bas
-		| Est -> droite
-		| Ouest -> gauche
-;;	
-
-let read_dir = 
-		if key_pressed() then read_key
-		else 'A;;
-
-		  
-  
-Key_pressed;; 
-read_key;;
+let f =
+	while true do 
+		read_key;;
 
 let test = let boo = ref true in
-while boo do
+	while boo do
 	if Key_pressed = true 
     	then read_key
 		else "over"
     done
 ;;
 
+(* ------------------ ZONE DE TEST ------------------*)
+
+
+read_key();;
+key_pressed;;
+
+Char.code 'Z';;
+Char.code 'q';;
+Char.code 's';;
+Char.code 'd';;
+
+(* ------------------ ZONE DE TEST -------------------*)
 
 (* Fonction main *)
 
@@ -295,21 +321,8 @@ let g = let continuer = ref true and tableau = make_matrix 4 4 0
 							begin
 								initialisation 0;
 								debut tableau tableau_prime;
+								read_print_cases tableau tableau_prime;
 								continuer := false;
 							end;
 						done;;
 								
-
-
-let game = 
-		let over = ref false and tableau = make_matrix 4 4 0 and tableau_prime = make_matrix 4 4 0 in
-				while !over do 
-					begin 
-					initialisation;
-					debut tableau;
-					
-		
-	
-    			if array_rempli tableau_prime then print_game_over else ()
-					end
-    done;;
