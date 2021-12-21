@@ -26,10 +26,44 @@ let orange = rgb 212 133 42;;
 let bleu_ciel = rgb 42 206 212;;
 let la3 = sound 440 1;;
 
+(* Fonctions de générateurs aléatoires *)
+let deux_ou_quatre = if (int 2) = 0 then 2 else 4;;
+	
+(* Fonctions qui détermine la couleur de chaque case associée 
+ainsi que le son entendu lors d'une collision *)
+
+let couleur_case nombre = match nombre with
+		| 2 -> rouge
+		| 4 -> vert
+		| 8 -> yellow
+		| 16 -> black
+		| 32 -> bleu
+		| 64 -> bleu_clair
+		| 128 -> rose
+		| 256 -> vert_clair
+		| 512 -> bleu_fonce
+		| 1024 -> violet 
+		| 2048 -> orange
+		| _ -> bleu_ciel;;
+		
+let son_collision nombre = match nombre with
+		| 2 -> la
+		| 4 ->
+		| 8 -> 
+		| 16 -> 
+		| 32 -> 
+		| 64 ->
+		| 128 ->
+		| 256 ->
+		| 512 -> 
+		| 1024 ->
+		| 2048 -> 
+		| 4096 -> 
+		;;
+
 (* Fonctions pour tracer le background (titre, score) *)
 
-
-let initialisation = 
+let initialisation n = 
 	open_graph ":0";
 	resize_window 800 600;
 	set_color rouge_fonce;
@@ -54,9 +88,7 @@ let initialisation =
 		end
 	done;;
 
-(* Fonctions de générateurs aléatoires *)
-let deux_ou_quatre = if (int 2) = 0 then 2 else 4;;
-	
+
 (* problème si on a les mêmes coord *)
 let debut array array_prime = let a = int 4 and b = int 4
 		and c = int 4 and d = int 4 in
@@ -68,54 +100,19 @@ let debut array array_prime = let a = int 4 and b = int 4
 
 (* Fonctions qui lit le tableau et l'affiche + affiche le background *)
 	
+		(* affiche le score *)
 let print_score score = 
 		set_color white;
 		set_text_size 25;
 		moveto 35 200;
 		draw_string (string_of_int score);;
-	
-		(* fonctions qui détermine la couleur de chaque case associée 
-ainsi que le son entendu lors d'une collision *)
-
-let couleur_case nombre = match nombre with
-		| 2 -> rouge
-		| 4 -> vert
-		| 8 -> yellow
-		| 16 -> black
-		| 32 -> bleu
-		| 64 -> bleu_clair
-		| 128 -> rose
-		| 256 -> vert_clair
-		| 512 -> bleu_fonce
-		| 1024 -> violet 
-		| 2048 -> orange
-		| _ -> bleu_ciel;;
-					
-
 		
-let son_collision nombre = match nombre with
-		| 2 -> la
-		| 4 ->
-		| 8 -> 
-		| 16 -> 
-		| 32 -> 
-		| 64 ->
-		| 128 ->
-		| 256 ->
-		| 512 -> 
-		| 1024 ->
-		| 2048 -> 
-		| 4096 -> 
-		;;
-		
-		
+		(* adapte la position du nombre selon la taille qu'il prend *)
 let taille_nombre nb x y = match nb with
 		| n when n < 10 -> moveto (x+60) (y+50)
 		| n when n < 100 -> moveto (x+45) (y+50)
 		| n when n < 1000 -> moveto (x+25) (y+50)
 		| _ -> set_text_size 40; moveto (x+23) (y+55);;
-		
-
 	
 		(* affiche chaque case + nombre *)
 let print_cases x y nombre =
@@ -125,9 +122,10 @@ let print_cases x y nombre =
 		set_text_size 50;
 		taille_nombre nombre x y;
 		draw_string (string_of_int nombre)
-		;;
-				
+		;;			
 
+		(* lit les tableaux, détermine ce qui doit être affiché
+		et appelle la fonction print_cases *)
 let read_print array array_prime = 
     (* affiche case et nombre*)
     for i = 0 to 3 do 
@@ -140,10 +138,6 @@ let read_print array array_prime =
         done
     done
     ;;
-
-let test = let f = make_matrix 4 4 0 and g = make_matrix 4 4 0 in
-		debut f g;
-		read_print f g;;
 		
 read_print (make_matrix 4 4 2048) (make_matrix 4 4 1);;
 
@@ -151,8 +145,8 @@ read_print (make_matrix 4 4 2048) (make_matrix 4 4 1);;
 		
 
 
-		(* créé une matrice indiquant les emplacements remplis/vides *)
-let emplacements_libres array array_prime = 
+		(* update array_prime *)
+let update array array_prime = 
 		for i = 0 to 3 do	
 				for j = 0 to 3 do
 						if array.(i).(j) != 0 then array_prime.(i).(j) <- 1
@@ -161,14 +155,17 @@ let emplacements_libres array array_prime =
 		done
 		;;
 		
-let new_coord a b array array_prime = 
-		array.(a).(b) <- deux_ou_quatre;
-		array_prime.(a).(b) <- 1;;
 		
-let new_tile array array_prime= let t = ref true in 
-		while !t do
+		(* choisit de façon random un emplacement libre *)
+		
+let new_tile array array_prime = let boo = ref true in
+		while !boo do
 				let a = int 4 and b = int 4 in
-				if array_prime.(a).(b) = 0 then new_coord a b array array_prime else ()
+				if array_prime.(a).(b) = 0 
+						then 
+							array.(a).(b) <- deux_ou_quatre;
+							array_prime.(a).(b) <- 1;
+							boo := false
 		done;;
 		
 		
@@ -184,7 +181,7 @@ let array_rempli array_prime =
 
 (* Fonction qui affiche l'écran de game over *)
 
-let print_game_over = 
+let print_game_over n = 
     set_color vert;
     fill_rect 300 200 360 200;
 		moveto 330 280;
@@ -210,28 +207,58 @@ let play_again =
 
 
 
-(* Fonction main *)
-
-
-let game = 
-		let over = ref false and tableau = make_matrix 4 4 0 and tableau_prime = make_matrix 4 4 0 in
-				while !over do 
-					begin 
-					initialisation;
-					debut tableau;
-					
-		
-	
-    			if array_rempli tableau_prime then print_game_over else ()
-					end
-    done;;
-
 	(* fonction qui détecte le déplacement du joueur (keyboard) *)
 
 read_key;;
 
     
   (* 4 directions : Nord Sud Est Ouest *)  
+
+type col = Avancement| Collision | Rien ;;
+
+let etat alpha beta a b = match alpha, beta with 
+		| 1, 0 -> array.(i).(j-1) <- array.(i).(j-1);
+							array.(i).(j-1) <- 0;
+							array_prime.(i).(j-1) <- 1;
+							array_prime.(i).(j) <- 0
+
+		| x, y when a = b -> array.(i).(j-1) <- array.(i).(j-1)*array.(i).(j-1)
+													array.(i).(j-1) <- 0;
+													array_prime.(i).(j) <- 0;
+
+		| _ -> ();;
+		
+
+  
+let haut array array_prime = 
+		for j = 1 to 3 do
+				for i = 0 to 3 do 
+						k = etat array_prime.(i).(j-1) array_prime.(i).(j) array.(i).(j) array.(i).(j-1);
+				done
+		done;;
+    
+let bas array array_prime = 
+		for j = 2 downto 0 do
+				for i = 0 to 3 do 
+				
+				done
+		done;;
+		
+let gauche array array_prime = 
+		for i = 2 downto 0 do
+				for j = 0 to 3 do 
+				
+				done
+		done;;
+		
+let droite array array_prime = 
+		for j = 2 downto 0 do
+				for i = 0 to 3 do 
+				
+				done
+		done;;
+  
+  
   
 type direction = Nord | Sud | Est | Ouest ;;
 
@@ -260,3 +287,29 @@ while boo do
 ;;
 
 
+(* Fonction main *)
+
+let g = let continuer = ref true and tableau = make_matrix 4 4 0 
+				and tableau_prime = make_matrix 4 4 0 in
+						while !continuer do
+							begin
+								initialisation 0;
+								debut tableau tableau_prime;
+								continuer := false;
+							end;
+						done;;
+								
+
+
+let game = 
+		let over = ref false and tableau = make_matrix 4 4 0 and tableau_prime = make_matrix 4 4 0 in
+				while !over do 
+					begin 
+					initialisation;
+					debut tableau;
+					
+		
+	
+    			if array_rempli tableau_prime then print_game_over else ()
+					end
+    done;;
