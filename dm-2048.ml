@@ -204,7 +204,9 @@ let new_tile array array_prime = let boo = ref true in
 		(* fonction auxiliaire utilisée dans la fonction suivante *)
 let condition_vide element = element = 1;;
 
-		(* renvoie true si le tableau est rempli *)
+		(* renvoie true si le tableau est rempli 
+		NB : Utiliser let rec pour que ça soit plus beau ?
+		*)
 let array_rempli array_prime = 
 		for_all condition_vide array_prime.(0) && 
 		for_all condition_vide array_prime.(1) &&
