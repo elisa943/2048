@@ -41,7 +41,7 @@ let fa4 = sound 698 1;;
 let sol4 = sound 784 1;;
 
 (* ---------- Fonctions de générateurs aléatoires ---------- *)
-let deux_ou_quatre = if (int 2) = 0 then 2 else 4;;
+let deux_ou_quatre f = if (int 2) = 0 then 2 else 4;;
 
 (* Fonctions qui détermine :
 - la couleur de chaque case associée 
@@ -95,10 +95,21 @@ let direction_of_ASCII d = match d with
 		| 68 -> Droite
 		| 100 -> Droite
 		| _ -> Rien;;
-
+		
+let direction_of_char c = match c with
+		| 'z' -> Haut
+		| 'Z' -> Haut
+		| 'q' -> Gauche
+		| 'Q' -> Gauche
+		| 's' -> Bas
+		| 'S' -> Bas
+		| 'd' -> Droite
+		| 'D' -> Droite
+		| _ -> Rien;;
+		
 (* ---------- Fonctions pour tracer le background (titre, score) ---------- *)
 
-let initialisation n = 
+let initialisation score = 
 	open_graph ":0";
 	resize_window 800 600;
 	set_color rouge_fonce;
@@ -113,6 +124,11 @@ let initialisation n =
 	moveto 15 30;
 	set_text_size 15;
 	draw_string "Made by Elisa";
+	
+	set_color white;
+	set_text_size 25;
+	moveto 35 250;
+	draw_string (string_of_int !score);
 
 	for i = 0 to 3 do
 		begin
@@ -123,21 +139,16 @@ let initialisation n =
 		end
 	done;;
 
+
 (* NB : problème si on a les mêmes coord (mêmes si les proba sont faibles *)
 let debut array array_prime = let a = int 4 and b = int 4
 		and c = int 4 and d = int 4 in
-		array.(a).(b) <- deux_ou_quatre;
-		array.(c).(d) <- deux_ou_quatre;
+		array.(a).(b) <- deux_ou_quatre 0;
+		array.(c).(d) <- deux_ou_quatre 0;
 		array_prime.(a).(b) <- 1;
 		array_prime.(c).(d) <- 1;;
 		
-		
-		(* affiche le score *)
-let print_score score = 
-		set_color white;
-		set_text_size 25;
-		moveto 35 200;
-		draw_string (string_of_int score);;
+
 
 (* ---------- Fonctions qui lit le tableau, l'affiche ---------- *)
 	
@@ -157,13 +168,13 @@ let print_cases x y nombre =
 		set_color white;
 		set_text_size 50;
 		taille_nombre nombre x y;
-		draw_string (string_of_int nombre)
-		;;			
+		draw_string (string_of_int nombre);;		
 
 		(* lit les tableaux, détermine ce qui doit être affiché
 		et appelle la fonction print_cases *)
-let read_print_cases array array_prime = 
+let affichage array array_prime score = 
     (* affiche case et nombre*)
+    initialisation score;
     for i = 0 to 3 do 
         for j = 0 to 3 do
             begin 
@@ -194,9 +205,12 @@ let new_tile array array_prime = let boo = ref true in
 				let a = int 4 and b = int 4 in
 				if array_prime.(a).(b) = 0 
 						then 
-							array.(a).(b) <- deux_ou_quatre;
+							begin
+							array.(a).(b) <- deux_ou_quatre 0;
 							update array array_prime;
+							
 							boo := false
+							end
 		done;;
 
 (* ---------- Fonctions qui détecte le game over ---------- *)
@@ -256,7 +270,133 @@ let bloque array = let var = ref false in
 						done;
 						!var
 				;;
+
+(* ---------- Fonctions qui détecte le déplacement du joueur---------- *)
+
+		(* Les 4 fonctions suivantes fonctionnent de manière analogue :
+		On définit une variable compteur qui sert à compter le nombre de changements 
+		(nécessaire pour stopper la boucle while). Lorsque le compteur atteint 12, cela 
+		veut dire qu'il n'y a pas eu de changements durant ces deux boucles for, et donc
+		que l'on peut sortir de la boucle while. 
+		*)
+
+let haut array array_prime score = 
+		let compteur = ref 0 in
+		while !compteur <> 12 do
+			begin
+				compteur := 0;
+				for j = 1 to 3 do
+						for i = 0 to 3 do 
+								if array.(i).(j) <> array.(i).(j+1) then incr compteur
+								else 
+								begin
+									array.(i).(j+1) <- array.(i).(j+1)+array.(i).(j+1);
+									score := !score + array.(i).(j+1);
+									array.(i).(j) <- 0;
+									update array array_prime;
+									affichage array array_prime !score;
+								end;
+						done;
+				done;
+			end;
+		done;;
 		
+let bas array array_prime score = 
+		let compteur = ref 0 in
+		while !compteur <> 12 do
+			begin
+				compteur := 0;
+				for j = 2 downto 0 do
+						for i = 0 to 3 do 
+								if array.(i).(j) <> array.(i).(j-1) then incr compteur
+								else 
+								begin
+									array.(i).(j-1) <- array.(i).(j-1)+array.(i).(j);
+									score := !score + array.(i).(j-1);
+									array.(i).(j) <- 0;
+									update array array_prime;
+									affichage array array_prime !score;
+								end;
+					done;
+				done;
+				end;
+		done;;
+		
+let gauche array array_prime score = 
+		let compteur = ref 0 in
+		while !compteur <> 12 do
+			begin
+				compteur := 0;
+				for i = 1 to 3 do
+						for j = 0 to 3 do 
+								if array.(i).(j) <> array.(i-1).(j) then incr compteur
+								else 
+								begin
+									array.(i-1).(j) <- array.(i-1).(j)+array.(i).(j);
+									score := !score + array.(i-1).(j);
+									array.(i).(j) <- 0;
+									update array array_prime;
+									affichage array array_prime !score;
+								end;
+						done;
+				done;
+			end;
+		done;;	
+
+(* 3 cas :
+ - les deux cases comparées sont toutes les 2 vides -> rien
+ - la première case contient un nombre et la deuxième ne contient
+ rien, 2 cas : 
+ 							-> déplacement de l'une des cases
+ 							mais le score reste inchangé
+ 							-> rien
+- les deux cases contiennent un nombre, 2 cas :
+							- si même nombre -> la case se déplace, le score
+							change.
+							- si pas le même nombre -> rien
+
+*)
+
+let droite array array_prime score = let compteur = ref 0 in
+		while !compteur <> 12 do
+				compteur := 0;
+				for i = 2 downto 0 do
+						for j = 0 to 3 do 
+								if array.(i).(j) <> array.(i+1).(j) 
+								then 
+								(* PB : pas tous les cas *)
+										if array_prime.(i).(j) = 1 && array_prime.(i+1).(j) = 0
+										then 
+											begin
+											array.(i+1).(j) <- array.(i+1).(j)+array.(i).(j);
+											array.(i).(j) <- 0
+											update array array_prime;
+											end
+										else incr compteur
+								else
+									if array_prime.(i).(j) = 0 && array_prime.(i+1).(j) = 0
+									then incr compteur
+									else
+									begin
+										array.(i+1).(j) <- array.(i+1).(j)+array.(i).(j);
+										array.(i).(j) <- 0;
+										score := !score + array.(i+1).(j);
+										update array array_prime;
+										affichage array array_prime score
+									end
+						done
+				done
+		done;;
+
+		(* appelle les 4 fonctions de déplacements précédentes 
+		pour faire déplacer les cases *)
+let output_direction dir array array_prime score = match dir with 
+		|	Haut -> haut array array_prime score
+		| Bas -> bas array array_prime score
+		| Gauche -> gauche array array_prime score
+		| Droite -> droite array array_prime score
+		| Rien -> ();;
+					
 
 (* ---------- Fonction qui affiche l'écran de game over ---------- *)
 
@@ -275,7 +415,7 @@ let detecte_play_again x y w h etat=
 	x <= etat.mouse_x && etat.mouse_x >= x+w 
 	&& y <= etat.mouse_y && etat.mouse_y >= y+h && etat.button;;
 
-let play_again = 
+let play_again score = 
 		set_color vert;
 		fill_rect 330 50 300 100;
 		moveto 370 90;
@@ -283,119 +423,15 @@ let play_again =
 		set_color white;
 		draw_string "PLAY AGAIN";
 		if detecte_play_again 330 50 300 100 (wait_next_event Poll)
-		then initialisation 0 else ();;
-
-
-
-(* ---------- Fonctions qui détecte le déplacement du joueur---------- *)
-
-		(* Les 4 fonctions suivantes fonctionnent de manière analogue :
-		On définit une variable compteur qui sert à compter le nombre de changements 
-		(nécessaire pour stopper la boucle while). Lorsque le compteur atteint 12, cela 
-		veut dire qu'il n'y a pas eu de changements durant ces deux boucles for, et donc
-		que l'on peut sortir de la boucle while. 
-		*)
-
-let haut array array_prime score = 
-		let compteur = ref 0 in
-		while ! compteur <> 12 do
-			begin
-				compteur := 0;
-				for j = 1 to 3 do
-						for i = 0 to 3 do 
-								if array.(i).(j) <> array.(i).(j+1) then incr compteur
-								else 
-								array.(i).(j+1) <- array.(i).(j+1)+array.(i).(j+1);
-								score := !score + array.(i).(j+1);
-								array.(i).(j) <- 0;
-								update array array_prime;
-						done;
-				done;
-			end;
-		done;;
-		
-let bas array array_prime score = 
-		let compteur = ref 0 in
-		while !compteur <> 12 do
-			begin
-				compteur := 0;
-				for j = 2 downto 0 do
-						for i = 0 to 3 do 
-								if array.(i).(j) <> array.(i).(j-1) then incr compteur
-								else 
-									array.(i).(j-1) <- array.(i).(j-1)+array.(i).(j);
-									score := !score + array.(i).(j-1);
-									array.(i).(j) <- 0;
-									update array array_prime;
-					done;
-				done;
-				end;
-		done;;
-		
-let gauche array array_prime score = 
-		let compteur = ref 0 in
-		while !compteur <> 12 do
-			begin
-				compteur := 0;
-				for i = 1 to 3 do
-						for j = 0 to 3 do 
-								if array.(i).(j) <> array.(i-1).(j) then incr compteur
-								else 
-									array.(i-1).(j) <- array.(i-1).(j)+array.(i).(j);
-									score := !score + array.(i-1).(j);
-									array.(i).(j) <- 0;
-									update array array_prime;
-						done;
-				done;
-			end;
-		done;;
-		
-let droite array array_prime score = 
-		let compteur = ref 0 in
-		while !compteur <> 12 do
-			begin
-				compteur := 0;
-				for j = 2 downto 0 do
-						for i = 0 to 3 do 
-								if array.(i).(j) <> array.(i+1).(j) then incr compteur
-								else
-									array.(i+1).(j) <- array.(i+1).(j)+array.(i).(j);
-									score := !score + array.(i+1).(j);
-									array.(i).(j) <- 0;
-									update array array_prime;
-						done;
-				done;
-			end;
-		done;;
-
-
-		(* lit le clavier, convertit l'ASCII  *)
-let read_clavier = direction_of_ASCII (code (read_key()));;
-
-		(* utilise la fonction précédente et appelle les 4 fonctions de déplacements 
-		précédentes pour faire déplacer les cases *)
-let output_direction dir array array_prime score = match dir with 
-		|	Haut -> haut array array_prime score
-		| Bas -> bas array array_prime score
-		| Gauche -> gauche array array_prime score
-		| Droite -> droite array array_prime score
-		| Rien -> ();;
-		
-		(* détecte si une touche du clavier est appuyée *)
-let detecte_deplacement array array_prime score = 
-		if key_pressed() 
-				then 
-					output_direction read_clavier array array_prime score;
-					new_tile array array_prime;;
+		then initialisation score else ();;
 
 (* ------------------ ZONE DE TEST ------------------*)
 
-
-
-
-
+read_key;;
 
 (* ------------------ ZONE DE TEST -------------------*)
+
+Sys.time;;
 
 (* ---------- Fonction main ---------- *)
 
@@ -403,18 +439,29 @@ let g = let continuer = ref true in
 				let tableau = make_matrix 4 4 0 in
 				let tableau_prime = make_matrix 4 4 0 in
 				let	score = ref 0 in
-						
-						initialisation 0;
+				let toucheAppuyee = ref false in
+				let touche = ref ' ' in
+				
 						debut tableau tableau_prime;
-						read_print_cases tableau tableau_prime;	
-						
+						affichage tableau tableau_prime score;	
 						while !continuer do
-								if key_pressed() 
+								toucheAppuyee := key_pressed();
+								if !toucheAppuyee 
 									then 
-										output_direction read_clavier tableau tableau_prime score;
-										new_tile tableau tableau_prime;
-								(*detecte_deplacement tableau tableau_prime score;*)
+										begin
+											touche := read_key();
+
+											output_direction (direction_of_char !touche) tableau tableau_prime score;
+											new_tile tableau tableau_prime;
+											affichage tableau tableau_prime score;
+											
+											touche := ' ';
+											toucheAppuyee := false;
+										end;
 								if array_rempli tableau_prime && bloque tableau
-									then print_game_over 0;
-								continuer := false;
-						done;;							
+									then 
+										begin 
+											print_game_over 0;
+											continuer := false;
+										end;
+						done;;						
