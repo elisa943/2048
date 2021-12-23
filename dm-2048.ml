@@ -25,6 +25,7 @@ let bleu_fonce = rgb 47 39 138;;
 let violet = rgb 142 115 222;;
 let orange = rgb 212 133 42;;
 let bleu_ciel = rgb 42 206 212;;
+let jaune = rgb 214 206 49;;
 
 let do3 = sound 131 1;;
 let re3 = sound 294 1;;
@@ -51,7 +52,7 @@ let deux_ou_quatre f = if (int 2) = 0 then 2 else 4;;
 let couleur_case nombre = match nombre with
 		| 2 -> rouge
 		| 4 -> vert
-		| 8 -> yellow
+		| 8 -> jaune
 		| 16 -> black
 		| 32 -> bleu
 		| 64 -> bleu_clair
@@ -85,17 +86,7 @@ type direction = Haut | Bas | Gauche | Droite | Rien;;
 		S ou s -> bas
 		D ou d -> droite
 		 *)
-let direction_of_ASCII d = match d with 
-		| 90 -> Haut
-		| 122 -> Haut
-		| 81 -> Gauche
-		| 113 -> Gauche
-		| 83 -> Bas
-		| 115 -> Bas
-		| 68 -> Droite
-		| 100 -> Droite
-		| _ -> Rien;;
-		
+
 let direction_of_char c = match c with
 		| 'z' -> Haut
 		| 'Z' -> Haut
@@ -107,11 +98,20 @@ let direction_of_char c = match c with
 		| 'D' -> Droite
 		| _ -> Rien;;
 		
-(* ---------- Fonctions pour tracer le background (titre, score) ---------- *)
+		(* update array_prime en fonction de array  
+		COMPLEXITE HORRIBLE ENFT *)
+let update array array_prime = 
+		for i = 0 to 3 do	
+				for j = 0 to 3 do
+						if array.(i).(j) > 0 then array_prime.(i).(j) <- 1
+						else array_prime.(i).(j) <- 0
+				done
+		done
+		;;
+		
+(* ---------- Fonctions pour tracer le background (ce qui ne bouge pas) ---------- *)
 
 let initialisation score = 
-	open_graph ":0";
-	resize_window 800 600;
 	set_color rouge_fonce;
 	fill_rect 0 0 800 600;
 	moveto 35 500;
@@ -124,11 +124,6 @@ let initialisation score =
 	moveto 15 30;
 	set_text_size 15;
 	draw_string "Made by Elisa";
-	
-	set_color white;
-	set_text_size 25;
-	moveto 35 250;
-	draw_string (string_of_int !score);
 
 	for i = 0 to 3 do
 		begin
@@ -141,12 +136,12 @@ let initialisation score =
 
 
 (* NB : problème si on a les mêmes coord (mêmes si les proba sont faibles *)
-let debut array array_prime = let a = int 4 and b = int 4
-		and c = int 4 and d = int 4 in
+let debut array array_prime = 
+		let a = int 4 in let b = int 4 in
+		let c = int 4 in let d = int 4 in
 		array.(a).(b) <- deux_ou_quatre 0;
 		array.(c).(d) <- deux_ou_quatre 0;
-		array_prime.(a).(b) <- 1;
-		array_prime.(c).(d) <- 1;;
+		update array array_prime;;
 		
 
 
@@ -162,41 +157,38 @@ let taille_nombre nb x y = match nb with
 		| _ -> set_text_size 40; moveto (x+23) (y+55);;
 	
 		(* affiche chaque case + nombre *)
-let print_cases x y nombre =
-		set_color (couleur_case nombre);
-		fill_rect (x+10) (y+10) 130 130;
-		set_color white;
-		set_text_size 50;
-		taille_nombre nombre x y;
-		draw_string (string_of_int nombre);;		
+
 
 		(* lit les tableaux, détermine ce qui doit être affiché
-		et appelle la fonction print_cases *)
+		et appelle la fonction print_cases
+		et affiche le score  *)
 let affichage array array_prime score = 
     (* affiche case et nombre*)
-    initialisation score;
+    set_color rouge_fonce;
+		fill_rect 35 250 100 40;
+		set_color white;
+		set_text_size 25;
+		moveto 35 250;
+		draw_string (string_of_int !score);
     for i = 0 to 3 do 
         for j = 0 to 3 do
-            begin 
             if array_prime.(i).(j) = 1
-            then print_cases (200 + i*150) (450 - j*150) array.(i).(j)
+            then 
+            	begin
+								set_color (couleur_case array.(i).(j));
+								fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
+								set_color white;
+								set_text_size 50;
+								taille_nombre array.(i).(j) (200 + i*150) (450 - j*150);
+								draw_string (string_of_int array.(i).(j));
+            	end
             else ()
-            end
         done
     done
     ;;
 
 (* ---------- Fonctions qui choisissent un emplacement libre random et ajoute 2 ou 4 ---------- *)
-		
-		(* update array_prime en fonction de array  *)
-let update array array_prime = 
-		for i = 0 to 3 do	
-				for j = 0 to 3 do
-						if array.(i).(j) > 0 then array_prime.(i).(j) <- 1
-						else array_prime.(i).(j) <- 0
-				done
-		done
-		;;
+
 		
 		(* choisit de façon random un emplacement libre 
 		et y ajoute de façon random une case entre 2 et 4 *)
@@ -279,131 +271,6 @@ let bloque array = let var = ref false in
 		que l'on peut sortir de la boucle while. 
 		*)
 
-let haut array array_prime score = 
-		let compteur = ref 0 in
-		while !compteur <> 12 do
-			begin
-				compteur := 0;
-				for j = 1 to 3 do
-						for i = 0 to 3 do 
-								if array.(i).(j) <> array.(i).(j+1) 
-								then 
-								(* PB : pas tous les cas *)
-										if array_prime.(i).(j) = 1 && array_prime.(i).(j+1) = 0
-										then 
-											begin
-											array.(i).(j+1) <- array.(i).(j+1)+array.(i).(j);
-											array.(i).(j) <- 0;
-											update array array_prime;
-											end
-										else incr compteur
-								else
-									if array_prime.(i).(j) = 0 && array_prime.(i).(j+1) = 0
-									then incr compteur
-									else
-									begin
-										array.(i).(j+1) <- array.(i).(j+1)+array.(i).(j);
-										array.(i).(j) <- 0;
-										score := !score + array.(i).(j+1);
-										update array array_prime;
-										affichage array array_prime score
-									end
-						done;
-				done;
-			end;
-		done;;
-		
-type crash = Collision | PasCollision | Deplacement | PasDeplacement;;
-
-
-let deplacement a b dir = match a, b with 
-		| 0, 0 -> PasDeplacement
-		| c, d when c = d -> Collision
-		| c, d when c <> d -> PasCollision
-		|	0, d when dir = Gauche -> Deplacement
-		| c, 0 when dir = Droite -> Deplacement
-		| c, 0 when dir = Bas -> Deplacement
-		| 0, d when dir = Haut -> Deplacement
-		| _, _ -> PasDeplacement;;
-		
-let bas array array_prime score = 
-		let compteur = ref 0 in 
-		while !compteur <> 12	do 
-			begin
-				compteur := 0;
-				for j = 2 downto 0 do 
-						for i = 0 to 3 do
-								if (deplacement array.(i).(j) array.(i).(j+1) Bas) = Collision 
-									|| (deplacement array.(i).(j) array.(i).(j+1) Bas) = Deplacement
-								then 
-									begin
-										array.(i).(j+1) <- array.(i).(j)+array.(i).(j+1);
-										array.(i).(j) <- 0;
-										update array array_prime;
-										affichage array array_prime score								
-									end
-								else incr compteur
-						done;
-				done;
-			end
-		done;;
-
-2 = 2 || 4 = 1;;		
-
-let droite array array_prime score = 
-		let compteur = ref 0 in
-		while !compteur <> 12 do 
-			begin
-				compteur := 0;
-				for i = 2 downto 0 do
-						for j = 0 to 3 do
-								if deplacement array.(i).(j) array.(i+1).(j) Droite = Collision || 
-								deplacement array.(i).(j) array.(i+1).(j) Droite = Deplacement
-								then
-									begin
-										array.(i+1).(j) <- array.(i).(j) + array.(i+1).(j);
-										array.(i).(j) <- 0;
-										update array array_prime;
-										affichage array array_prime score
-									end
-								else incr compteur
-						done
-				done
-			end
-		done;;
-
-let gauche array array_prime score = 
-		let compteur = ref 0 in
-		while !compteur <> 12 do
-			begin
-				compteur := 0;
-				for i = 1 to 3 do
-						for j = 0 to 3 do 
-								if array.(i).(j) <> array.(i-1).(j) 
-								then 
-								(* PB : pas tous les cas *)
-										if array_prime.(i).(j) = 1 && array_prime.(i-1).(j) = 0
-										then 
-											begin
-											array.(i-1).(j) <- array.(i-1).(j)+array.(i).(j);
-											array.(i).(j) <- 0;
-											update array array_prime;
-											end
-								else
-									if array_prime.(i).(j) = 0 && array_prime.(i-1).(j) = 0
-									then incr compteur
-									else
-									begin
-										array.(i-1).(j) <- array.(i-1).(j)+array.(i).(j);
-										array.(i).(j) <- 0;
-										score := !score + array.(i-1).(j);
-										update array array_prime;
-										affichage array array_prime score
-									end
-						done;
-				done;
-			end;
-		done;;	
 
 (* 3 cas :
  - les deux cases comparées sont toutes les 2 vides -> rien
@@ -419,43 +286,153 @@ let gauche array array_prime score =
 
 *)
 
-(*
-let droite array array_prime score = let compteur = ref 0 in
+type crash = Collision | Deplacement | PasDeplacement;;
+
+let deplacement a b dir = match a, b with 
+		| 0, 0 -> PasDeplacement
+		| c, d when c = d -> Collision
+		|	0, d when dir = Gauche -> Deplacement
+		| c, 0 when dir = Droite -> Deplacement
+		| c, 0 when dir = Bas -> Deplacement
+		| 0, d when dir = Haut -> Deplacement
+		| _, _ -> PasDeplacement;;
+
+(* PB : une case ne peut subir qu'une seule collision *)
+
+let haut array array_prime score = 
+		let compteur = ref 0 in
 		while !compteur <> 12 do
+			begin
 				compteur := 0;
-				for i = 2 downto 0 do
-						for j = 0 to 3 do 
-								if array.(i).(j) <> array.(i+1).(j) 
+				for j = 1 to 3 do
+						for i = 0 to 3 do
+								if (deplacement array.(i).(j-1) array.(i).(j) Haut) = Collision
 								then 
-								(* PB : pas tous les cas *)
-										if array_prime.(i).(j) = 1 && array_prime.(i+1).(j) = 0
-										then 
-											begin
-											array.(i+1).(j) <- array.(i+1).(j)+array.(i).(j);
-											array.(i).(j) <- 0;
-											update array array_prime;
-											end
-										else incr compteur
-								else
-									if array_prime.(i).(j) = 0 && array_prime.(i+1).(j) = 0
-									then incr compteur
-									else
 									begin
-										array.(i+1).(j) <- array.(i+1).(j)+array.(i).(j);
+										array.(i).(j-1) <- array.(i).(j)+array.(i).(j-1);
 										array.(i).(j) <- 0;
-										score := !score + array.(i+1).(j);
-										update array array_prime;
-										affichage array array_prime score
+										array_prime.(i).(j) <- 0;
+										score := !score + array.(i).(j-1);
+										set_color black;
+										fill_rect 3 3 40 40;
+										affichage array array_prime score	
 									end
+								else 
+									if (deplacement array.(i).(j-1) array.(i).(j) Haut) = Deplacement
+									then 
+										begin
+											array.(i).(j-1) <- (array.(i).(j)+array.(i).(j-1));
+											array.(i).(j) <- 0;
+											array_prime.(i).(j-1) <- 1;
+											array_prime.(i).(j) <- 0;
+											affichage array array_prime score	
+										end
+									else incr compteur;
 						done
 				done
+			end
 		done;;
-*)
+		
+let bas array array_prime score = 
+		let compteur = ref 0 in 
+		while !compteur <> 12	do 
+			begin
+				compteur := 0;
+				for j = 2 downto 0 do 
+						for i = 0 to 3 do
+								if (deplacement array.(i).(j) array.(i).(j+1) Bas) = Collision
+								then 
+									begin
+										array.(i).(j+1) <- array.(i).(j)+array.(i).(j+1);
+										array.(i).(j) <- 0;
+										array_prime.(i).(j) <- 0;
+										affichage array array_prime score								
+									end
+								else 
+									if (deplacement array.(i).(j) array.(i).(j+1) Bas) = Deplacement
+									then 
+										begin
+											array.(i).(j+1) <- (array.(i).(j)+array.(i).(j+1));
+											array.(i).(j) <- 0;
+											array_prime.(i).(j) <- 0;
+											affichage array array_prime score	
+										end
+									else incr compteur
+						done
+				done
+			end
+		done;;
+
+let droite array array_prime score = 
+		let compteur = ref 0 in
+		while !compteur <> 12 do 
+			begin
+				compteur := 0;
+				for i = 2 downto 0 do
+						for j = 0 to 3 do
+								if (deplacement array.(i).(j) array.(i+1).(j) Droite) = Collision 
+								then
+									begin
+										array.(i+1).(j) <- array.(i).(j) + array.(i+1).(j);
+										array.(i).(j) <- 0;
+										array_prime.(i).(j) <- 0;
+										affichage array array_prime score
+									end
+								else 
+									if (deplacement array.(i).(j) array.(i+1).(j) Droite) = Deplacement
+									then
+										begin
+											array.(i+1).(j) <- (array.(i).(j)+array.(i+1).(j));
+											array.(i).(j) <- 0;
+											array_prime.(i+1).(j) <- 1;
+											array_prime.(i).(j) <- 0;
+											affichage array array_prime score	
+										end
+									else incr compteur
+						done
+				done
+			end
+		done;;
+		
+let gauche array array_prime score = 
+		let compteur = ref 0 in
+		while !compteur <> 12 do
+			begin
+				compteur := 0;
+
+				for i = 1 to 3 do
+						for j = 0 to 3 do
+								if (deplacement array.(i-1).(j) array.(i).(j) Gauche) = Collision
+								then
+									begin 
+										array.(i-1).(j) <- array.(i).(j)+array.(i-1).(j);
+										array.(i).(j) <- 0;
+										array_prime.(i).(j) <- 0;
+										affichage array array_prime score		
+									end
+								else 
+									if (deplacement array.(i-1).(j) array.(i).(j) Gauche) = Deplacement
+									then 
+										begin
+											array.(i-1).(j) <- (array.(i).(j)+array.(i-1).(j));
+											array.(i).(j) <- 0;
+											array_prime.(i-1).(j) <- 1;
+											array_prime.(i).(j) <- 0;
+											affichage array array_prime score	
+										end
+									else incr compteur
+						done
+				done
+			end
+		done;;
+
+
 
 		(* appelle les 4 fonctions de déplacements précédentes 
 		pour faire déplacer les cases *)
 let output_direction dir array array_prime score = match dir with 
-		|	Haut -> haut array array_prime score; new_tile array array_prime
+		|	Haut -> haut array array_prime score;
+										new_tile array array_prime
 		| Bas -> bas array array_prime score; new_tile array array_prime
 		| Gauche -> gauche array array_prime score; new_tile array array_prime
 		| Droite -> droite array array_prime score; new_tile array array_prime
@@ -491,11 +468,12 @@ let play_again score =
 
 (* ------------------ ZONE DE TEST ------------------*)
 
-read_key;;
+read_key;; 
+Sys.time;;
+
 
 (* ------------------ ZONE DE TEST -------------------*)
 
-Sys.time;;
 
 (* ---------- Fonction main ---------- *)
 
@@ -505,16 +483,19 @@ let g = let continuer = ref true in
 				let	score = ref 0 in
 				let toucheAppuyee = ref false in
 				let touche = ref ' ' in
-				
+						open_graph ":0";
+						resize_window 800 600;
+						initialisation score;
 						debut tableau tableau_prime;
 						affichage tableau tableau_prime score;	
+
 						while !continuer do
 								toucheAppuyee := key_pressed();
 								if !toucheAppuyee 
 									then 
 										begin
 											touche := read_key();
-
+											
 											output_direction (direction_of_char !touche) tableau tableau_prime score;
 											
 											affichage tableau tableau_prime score;
@@ -528,4 +509,4 @@ let g = let continuer = ref true in
 											print_game_over 0;
 											continuer := false;
 										end;
-						done;;				
+						done;;			
