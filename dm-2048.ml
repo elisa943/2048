@@ -192,7 +192,7 @@ let affichage array array_prime score =
 let update array array_prime = 
 		for i = 0 to 3 do	
 				for j = 0 to 3 do
-						if array.(i).(j) != 0 then array_prime.(i).(j) <- 1
+						if array.(i).(j) > 0 then array_prime.(i).(j) <- 1
 						else array_prime.(i).(j) <- 0
 				done
 		done
@@ -208,7 +208,6 @@ let new_tile array array_prime = let boo = ref true in
 							begin
 							array.(a).(b) <- deux_ou_quatre 0;
 							update array array_prime;
-							
 							boo := false
 							end
 		done;;
@@ -287,41 +286,92 @@ let haut array array_prime score =
 				compteur := 0;
 				for j = 1 to 3 do
 						for i = 0 to 3 do 
-								if array.(i).(j) <> array.(i).(j+1) then incr compteur
-								else 
-								begin
-									array.(i).(j+1) <- array.(i).(j+1)+array.(i).(j+1);
-									score := !score + array.(i).(j+1);
-									array.(i).(j) <- 0;
-									update array array_prime;
-									affichage array array_prime !score;
-								end;
+								if array.(i).(j) <> array.(i).(j+1) 
+								then 
+								(* PB : pas tous les cas *)
+										if array_prime.(i).(j) = 1 && array_prime.(i).(j+1) = 0
+										then 
+											begin
+											array.(i).(j+1) <- array.(i).(j+1)+array.(i).(j);
+											array.(i).(j) <- 0;
+											update array array_prime;
+											end
+										else incr compteur
+								else
+									if array_prime.(i).(j) = 0 && array_prime.(i).(j+1) = 0
+									then incr compteur
+									else
+									begin
+										array.(i).(j+1) <- array.(i).(j+1)+array.(i).(j);
+										array.(i).(j) <- 0;
+										score := !score + array.(i).(j+1);
+										update array array_prime;
+										affichage array array_prime score
+									end
 						done;
 				done;
 			end;
 		done;;
 		
+type crash = Collision | PasCollision | Deplacement | PasDeplacement;;
+
+
+let deplacement a b dir = match a, b with 
+		| 0, 0 -> PasDeplacement
+		| c, d when c = d -> Collision
+		| c, d when c <> d -> PasCollision
+		|	0, d when dir = Gauche -> Deplacement
+		| c, 0 when dir = Droite -> Deplacement
+		| c, 0 when dir = Bas -> Deplacement
+		| 0, d when dir = Haut -> Deplacement
+		| _, _ -> PasDeplacement;;
+		
 let bas array array_prime score = 
-		let compteur = ref 0 in
-		while !compteur <> 12 do
+		let compteur = ref 0 in 
+		while !compteur <> 12	do 
 			begin
 				compteur := 0;
-				for j = 2 downto 0 do
-						for i = 0 to 3 do 
-								if array.(i).(j) <> array.(i).(j-1) then incr compteur
-								else 
-								begin
-									array.(i).(j-1) <- array.(i).(j-1)+array.(i).(j);
-									score := !score + array.(i).(j-1);
-									array.(i).(j) <- 0;
-									update array array_prime;
-									affichage array array_prime !score;
-								end;
-					done;
+				for j = 2 downto 0 do 
+						for i = 0 to 3 do
+								if (deplacement array.(i).(j) array.(i).(j+1) Bas) = Collision 
+									|| (deplacement array.(i).(j) array.(i).(j+1) Bas) = Deplacement
+								then 
+									begin
+										array.(i).(j+1) <- array.(i).(j)+array.(i).(j+1);
+										array.(i).(j) <- 0;
+										update array array_prime;
+										affichage array array_prime score								
+									end
+								else incr compteur
+						done;
 				done;
-				end;
+			end
 		done;;
-		
+
+2 = 2 || 4 = 1;;		
+
+let droite array array_prime score = 
+		let compteur = ref 0 in
+		while !compteur <> 12 do 
+			begin
+				compteur := 0;
+				for i = 2 downto 0 do
+						for j = 0 to 3 do
+								if deplacement array.(i).(j) array.(i+1).(j) Droite = Collision || 
+								deplacement array.(i).(j) array.(i+1).(j) Droite = Deplacement
+								then
+									begin
+										array.(i+1).(j) <- array.(i).(j) + array.(i+1).(j);
+										array.(i).(j) <- 0;
+										update array array_prime;
+										affichage array array_prime score
+									end
+								else incr compteur
+						done
+				done
+			end
+		done;;
+
 let gauche array array_prime score = 
 		let compteur = ref 0 in
 		while !compteur <> 12 do
@@ -329,15 +379,27 @@ let gauche array array_prime score =
 				compteur := 0;
 				for i = 1 to 3 do
 						for j = 0 to 3 do 
-								if array.(i).(j) <> array.(i-1).(j) then incr compteur
-								else 
-								begin
-									array.(i-1).(j) <- array.(i-1).(j)+array.(i).(j);
-									score := !score + array.(i-1).(j);
-									array.(i).(j) <- 0;
-									update array array_prime;
-									affichage array array_prime !score;
-								end;
+								if array.(i).(j) <> array.(i-1).(j) 
+								then 
+								(* PB : pas tous les cas *)
+										if array_prime.(i).(j) = 1 && array_prime.(i-1).(j) = 0
+										then 
+											begin
+											array.(i-1).(j) <- array.(i-1).(j)+array.(i).(j);
+											array.(i).(j) <- 0;
+											update array array_prime;
+											end
+								else
+									if array_prime.(i).(j) = 0 && array_prime.(i-1).(j) = 0
+									then incr compteur
+									else
+									begin
+										array.(i-1).(j) <- array.(i-1).(j)+array.(i).(j);
+										array.(i).(j) <- 0;
+										score := !score + array.(i-1).(j);
+										update array array_prime;
+										affichage array array_prime score
+									end
 						done;
 				done;
 			end;
@@ -357,6 +419,7 @@ let gauche array array_prime score =
 
 *)
 
+(*
 let droite array array_prime score = let compteur = ref 0 in
 		while !compteur <> 12 do
 				compteur := 0;
@@ -369,7 +432,7 @@ let droite array array_prime score = let compteur = ref 0 in
 										then 
 											begin
 											array.(i+1).(j) <- array.(i+1).(j)+array.(i).(j);
-											array.(i).(j) <- 0
+											array.(i).(j) <- 0;
 											update array array_prime;
 											end
 										else incr compteur
@@ -387,14 +450,15 @@ let droite array array_prime score = let compteur = ref 0 in
 						done
 				done
 		done;;
+*)
 
 		(* appelle les 4 fonctions de déplacements précédentes 
 		pour faire déplacer les cases *)
 let output_direction dir array array_prime score = match dir with 
-		|	Haut -> haut array array_prime score
-		| Bas -> bas array array_prime score
-		| Gauche -> gauche array array_prime score
-		| Droite -> droite array array_prime score
+		|	Haut -> haut array array_prime score; new_tile array array_prime
+		| Bas -> bas array array_prime score; new_tile array array_prime
+		| Gauche -> gauche array array_prime score; new_tile array array_prime
+		| Droite -> droite array array_prime score; new_tile array array_prime
 		| Rien -> ();;
 					
 
@@ -452,7 +516,7 @@ let g = let continuer = ref true in
 											touche := read_key();
 
 											output_direction (direction_of_char !touche) tableau tableau_prime score;
-											new_tile tableau tableau_prime;
+											
 											affichage tableau tableau_prime score;
 											
 											touche := ' ';
@@ -464,4 +528,4 @@ let g = let continuer = ref true in
 											print_game_over 0;
 											continuer := false;
 										end;
-						done;;						
+						done;;				
