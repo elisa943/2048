@@ -26,6 +26,7 @@ let violet = rgb 142 115 222;;
 let orange = rgb 212 133 42;;
 let bleu_ciel = rgb 42 206 212;;
 let jaune = rgb 214 206 49;;
+let bleu_marine = rgb 43 66 158;;
 
 let do3 = sound 131 1;;
 let re3 = sound 294 1;;
@@ -42,7 +43,7 @@ let fa4 = sound 698 1;;
 let sol4 = sound 784 1;;
 
 (* ---------- Fonctions de générateurs aléatoires ---------- *)
-let deux_ou_quatre f = if (int 2) = 0 then 2 else 4;;
+let deux_ou_quatre n = if (int 2) = 0 then 2 else 4;;
 
 (* Fonctions qui détermine :
 - la couleur de chaque case associée 
@@ -110,9 +111,9 @@ let update array array_prime =
 		done
 		;;
 		
-(* ---------- Fonctions pour tracer le background (ce qui ne bouge pas) ---------- *)
+(* ---------- Fonctions pour tracer le background (ce qui reste immobile du début à la fin) ---------- *)
 
-let initialisation score = 
+let initialisation n = 
 	set_color rouge_fonce;
 	fill_rect 0 0 800 600;
 	moveto 35 500;
@@ -135,64 +136,76 @@ let initialisation score =
 		end
 	done;;
 
+(* fonction nécessaire pour être certain d'avoir des coordonnées
+différentes c'est-à-dire ne pas avoir seulement une case qui 
+apparaisse *)
 
-(* NB : problème si on a les mêmes coord (mêmes si les proba sont faibles *)
-let debut array array_prime = 
-		let a = int 4 in let b = int 4 in
-		let c = int 4 in let d = int 4 in
-		array.(a).(b) <- deux_ou_quatre 0;
-		array.(c).(d) <- deux_ou_quatre 0;
-		update array array_prime;;
+let verification a b c d = if a = c && b = d then false else true;;
+
+let debut array array_prime = let continuer = ref true in
+		while !continuer do
+				let a = int 4 and
+				b = int 4 and
+				c = int 4 and
+				d = int 4 in
+				if verification a b c d then
+					begin
+					array.(a).(b) <- deux_ou_quatre 0;
+					array.(c).(d) <- deux_ou_quatre 0;
+					array_prime.(a).(b) <- 1;
+					array_prime.(c).(d) <- 1;
+					continuer := false
+					end
+		done;;
 		
 
 
 (* ---------- Fonctions qui lit le tableau, l'affiche ---------- *)
 	
-
-		
-		(* adapte la position du nombre selon la taille qu'il prend *)
+		(* déplace le curseur veres la position du nombre (selon la taille du nombre) *)
 let taille_nombre nb x y = match nb with
 		| n when n < 10 -> moveto (x+60) (y+50)
 		| n when n < 100 -> moveto (x+45) (y+50)
 		| n when n < 1000 -> moveto (x+25) (y+50)
 		| _ -> set_text_size 40; moveto (x+23) (y+55);;
-	
-		(* affiche chaque case + nombre *)
 
 
 		(* lit les tableaux, détermine ce qui doit être affiché
-		et appelle la fonction print_cases
 		et affiche le score  *)
+		
 let affichage array array_prime score = 
-    (* affiche case et nombre*)
+    (* affiche le score *)
     set_color rouge_fonce;
 		fill_rect 35 250 100 40;
 		set_color white;
 		set_text_size 25;
 		moveto 35 250;
 		draw_string (string_of_int !score);
+		
+		(*affiche les cases et les nombres associés *)
     for i = 0 to 3 do 
         for j = 0 to 3 do
             if array_prime.(i).(j) = 1
             then 
             	begin
+            		(* trace la case *)
 								set_color (couleur_case array.(i).(j));
 								fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
+								
+								(* trace le nombre *)
 								set_color white;
 								set_text_size 50;
 								taille_nombre array.(i).(j) (200 + i*150) (450 - j*150);
 								draw_string (string_of_int array.(i).(j));
             	end
-            else ()
         done
-    done
-    ;;
+    done;;
 
-(* ---------- Fonctions qui choisissent un emplacement libre random et ajoute 2 ou 4 ---------- *)
+(* ---------- Fonction qui choisit un emplacement libre random et ajoute 2 ou 4 ---------- *)
 
 		
 		(* choisit de façon random un emplacement libre 
-		et y ajoute de façon random une case entre 2 et 4 *)
+		et y ajoute de façon random 2 ou 4 *)
 let new_tile array array_prime = let boo = ref true in
 		while !boo do
 				let a = int 4 and b = int 4 in
@@ -200,7 +213,7 @@ let new_tile array array_prime = let boo = ref true in
 						then 
 							begin
 							array.(a).(b) <- deux_ou_quatre 0;
-							update array array_prime;
+							array_prime.(a).(b) <- 1;
 							boo := false
 							end
 		done;;
@@ -224,12 +237,14 @@ let array_rempli array_prime =
 
 		(* fonction auxiliaire qui renvoie true s'il existe 
 		deux mêmes éléments d'affilée *)
-let deux_daffilee liste = let tmp = ref false in
-		for i = 0 to 2 do
-				if liste.(i) = liste.(i+1) then tmp := true 
-					else ()
+let deux_daffilee liste = 
+		let tmp = ref liste.(0) in
+		let boo = ref false in
+		for i = 1 to 3 do
+				if !tmp = liste.(i) then boo := true 
+					else tmp := liste.(i)
 		done;
-		!tmp;;
+		!boo;;
 				
 		(* fonction qui :
 		- utilise deux_d'affilee sur les lignes. 
@@ -241,28 +256,23 @@ let deux_daffilee liste = let tmp = ref false in
 		cette fonction.
 		
 		*)
-let bloque array = let var = ref false in
+let bloque array = 
+		let var = ref false in
 		for i = 0 to 3 do 
 				if deux_daffilee array.(i) = false 
 					then var := true 
-				else ()
 		done;
 		
 		if !var then !var else 
-				let array_inv = make_matrix 4 4 0 in 
-						for i = 0 to 3 do 
-								for j = 0 to 3 do
-									array_inv.(i).(j) <- array.(j).(i);
-								done;
-							done;
-						for i = 0 to 3 do 
-								if deux_daffilee array.(i) = false 
-									then var := true 
-								else ()
+				let tmp = ref array.(0).(0) in
+				for i = 0 to 3 do
+						for j = 1 to 3 do
+								if !tmp = array.(i).(j) then var := true
+								else tmp := array.(i).(j)
 						done;
-						!var
-				;;
-
+				done;
+				!var;;
+				
 (* ---------- Fonctions qui détecte le déplacement du joueur---------- *)
 
 		(* Les 4 fonctions suivantes fonctionnent de manière analogue :
@@ -299,6 +309,26 @@ let deplacement a b dir = match a, b with
 		| _, _ -> PasDeplacement;;
 
 (* PB : une case ne peut subir qu'une seule collision *)
+
+let cherche_vide array array_prime indice = 
+		let nb = 0
+		for i = indice+1 to 3 do
+				if array.(i) = 0; 
+		done
+
+
+let horizontal array array_prime dir = 
+		let array_cpy = copy array in 
+		let continuer = ref true in 
+		while !continuer do
+				for i = 2 downto 0 
+						for j = 0 to 3
+								if array.(i+1).(j) = 0
+						done
+				done
+				
+		done;;
+
 
 let haut array array_prime score = 
 		let compteur = ref 0 in
@@ -446,8 +476,7 @@ let gauche array array_prime score =
 		(* appelle les 4 fonctions de déplacements précédentes 
 		pour faire déplacer les cases *)
 let output_direction dir array array_prime score = match dir with 
-		|	Haut -> haut array array_prime score;
-										new_tile array array_prime
+		|	Haut -> haut array array_prime score; new_tile array array_prime
 		| Bas -> bas array array_prime score; new_tile array array_prime
 		| Gauche -> gauche array array_prime score; new_tile array array_prime
 		| Droite -> droite array array_prime score; new_tile array array_prime
@@ -515,10 +544,11 @@ let g = let continuer = ref true in
 											touche := ' ';
 											toucheAppuyee := false;
 										end;
-								if array_rempli tableau_prime && bloque tableau
-									then 
-										begin 
-											print_game_over 0;
-											continuer := false;
-										end;
-						done;;		
+								if array_rempli tableau_prime 
+										then if bloque tableau
+											then 
+											begin 
+												print_game_over 0;
+												continuer := false;
+											end;
+						done;;	
