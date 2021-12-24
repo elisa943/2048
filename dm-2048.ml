@@ -50,6 +50,7 @@ let deux_ou_quatre f = if (int 2) = 0 then 2 else 4;;
 - la direction indiquée par le joueur sur le clavier *)
 
 let couleur_case nombre = match nombre with
+		| 0 -> rouge_fonce
 		| 2 -> rouge
 		| 4 -> vert
 		| 8 -> jaune
@@ -313,8 +314,8 @@ let haut array array_prime score =
 										array.(i).(j) <- 0;
 										array_prime.(i).(j) <- 0;
 										score := !score + array.(i).(j-1);
-										set_color black;
-										fill_rect 3 3 40 40;
+										set_color rouge_fonce;
+										fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
 										affichage array array_prime score	
 									end
 								else 
@@ -325,6 +326,8 @@ let haut array array_prime score =
 											array.(i).(j) <- 0;
 											array_prime.(i).(j-1) <- 1;
 											array_prime.(i).(j) <- 0;
+											set_color rouge_fonce;
+											fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
 											affichage array array_prime score	
 										end
 									else incr compteur;
@@ -346,6 +349,8 @@ let bas array array_prime score =
 										array.(i).(j+1) <- array.(i).(j)+array.(i).(j+1);
 										array.(i).(j) <- 0;
 										array_prime.(i).(j) <- 0;
+										set_color rouge_fonce;
+										fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
 										affichage array array_prime score								
 									end
 								else 
@@ -355,6 +360,8 @@ let bas array array_prime score =
 											array.(i).(j+1) <- (array.(i).(j)+array.(i).(j+1));
 											array.(i).(j) <- 0;
 											array_prime.(i).(j) <- 0;
+											set_color rouge_fonce;
+											fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
 											affichage array array_prime score	
 										end
 									else incr compteur
@@ -376,6 +383,8 @@ let droite array array_prime score =
 										array.(i+1).(j) <- array.(i).(j) + array.(i+1).(j);
 										array.(i).(j) <- 0;
 										array_prime.(i).(j) <- 0;
+										set_color rouge_fonce;
+										fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
 										affichage array array_prime score
 									end
 								else 
@@ -386,6 +395,8 @@ let droite array array_prime score =
 											array.(i).(j) <- 0;
 											array_prime.(i+1).(j) <- 1;
 											array_prime.(i).(j) <- 0;
+											set_color rouge_fonce;
+											fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
 											affichage array array_prime score	
 										end
 									else incr compteur
@@ -408,6 +419,8 @@ let gauche array array_prime score =
 										array.(i-1).(j) <- array.(i).(j)+array.(i-1).(j);
 										array.(i).(j) <- 0;
 										array_prime.(i).(j) <- 0;
+										set_color rouge_fonce;
+										fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
 										affichage array array_prime score		
 									end
 								else 
@@ -418,6 +431,8 @@ let gauche array array_prime score =
 											array.(i).(j) <- 0;
 											array_prime.(i-1).(j) <- 1;
 											array_prime.(i).(j) <- 0;
+											set_color rouge_fonce;
+											fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
 											affichage array array_prime score	
 										end
 									else incr compteur
@@ -468,9 +483,6 @@ let play_again score =
 
 (* ------------------ ZONE DE TEST ------------------*)
 
-read_key;; 
-Sys.time;;
-
 
 (* ------------------ ZONE DE TEST -------------------*)
 
@@ -509,4 +521,4 @@ let g = let continuer = ref true in
 											print_game_over 0;
 											continuer := false;
 										end;
-						done;;			
+						done;;		
