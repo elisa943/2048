@@ -100,16 +100,6 @@ let direction_of_char c = match c with
 		| 'D' -> Droite
 		| _ -> Rien;;
 		
-		(* update array_prime en fonction de array  
-		COMPLEXITE HORRIBLE ENFT *)
-let update array array_prime = 
-		for i = 0 to 3 do	
-				for j = 0 to 3 do
-						if array.(i).(j) > 0 then array_prime.(i).(j) <- 1
-						else array_prime.(i).(j) <- 0
-				done
-		done
-		;;
 		
 (* ---------- Fonctions pour tracer le background (ce qui reste immobile du début à la fin) ---------- *)
 
@@ -142,7 +132,7 @@ apparaisse *)
 
 let verification a b c d = if a = c && b = d then false else true;;
 
-let debut array array_prime = let continuer = ref true in
+let debut array = let continuer = ref true in
 		while !continuer do
 				let a = int 4 and
 				b = int 4 and
@@ -152,8 +142,6 @@ let debut array array_prime = let continuer = ref true in
 					begin
 					array.(a).(b) <- deux_ou_quatre 0;
 					array.(c).(d) <- deux_ou_quatre 0;
-					array_prime.(a).(b) <- 1;
-					array_prime.(c).(d) <- 1;
 					continuer := false
 					end
 		done;;
@@ -173,7 +161,7 @@ let taille_nombre nb x y = match nb with
 		(* lit les tableaux, détermine ce qui doit être affiché
 		et affiche le score  *)
 		
-let affichage array array_prime score = 
+let affichage array score = 
     (* affiche le score *)
     set_color rouge_fonce;
 		fill_rect 35 250 100 40;
@@ -185,7 +173,7 @@ let affichage array array_prime score =
 		(*affiche les cases et les nombres associés *)
     for i = 0 to 3 do 
         for j = 0 to 3 do
-            if array_prime.(i).(j) = 1
+            if array.(i).(j) > 0
             then 
             	begin
             		(* trace la case *)
@@ -206,14 +194,13 @@ let affichage array array_prime score =
 		
 		(* choisit de façon random un emplacement libre 
 		et y ajoute de façon random 2 ou 4 *)
-let new_tile array array_prime = let boo = ref true in
+let new_tile array = let boo = ref true in
 		while !boo do
 				let a = int 4 and b = int 4 in
-				if array_prime.(a).(b) = 0 
+				if array.(a).(b) = 0 
 						then 
 							begin
 							array.(a).(b) <- deux_ou_quatre 0;
-							array_prime.(a).(b) <- 1;
 							boo := false
 							end
 		done;;
@@ -221,16 +208,16 @@ let new_tile array array_prime = let boo = ref true in
 (* ---------- Fonctions qui détecte le game over ---------- *)
 
 		(* fonction auxiliaire utilisée dans la fonction suivante *)
-let condition_vide element = element = 1;;
+let condition_vide element = element > 0;;
 
 		(* renvoie true si le tableau est rempli 
 		NB : Utiliser let rec pour que ça soit plus beau ?
 		*)
-let array_rempli array_prime = 
-		for_all condition_vide array_prime.(0) && 
-		for_all condition_vide array_prime.(1) &&
-		for_all condition_vide array_prime.(2) &&
-		for_all condition_vide array_prime.(3);;
+let array_rempli array = 
+		for_all condition_vide array.(0) && 
+		for_all condition_vide array.(1) &&
+		for_all condition_vide array.(2) &&
+		for_all condition_vide array.(3);;
 		
 
 		(* renvoie true si le joueur n'a plus de choix possible *)
@@ -310,27 +297,8 @@ let deplacement a b dir = match a, b with
 
 (* PB : une case ne peut subir qu'une seule collision *)
 
-let cherche_vide array array_prime indice = 
-		let nb = 0
-		for i = indice+1 to 3 do
-				if array.(i) = 0; 
-		done
 
-
-let horizontal array array_prime dir = 
-		let array_cpy = copy array in 
-		let continuer = ref true in 
-		while !continuer do
-				for i = 2 downto 0 
-						for j = 0 to 3
-								if array.(i+1).(j) = 0
-						done
-				done
-				
-		done;;
-
-
-let haut array array_prime score = 
+let haut array score = 
 		let compteur = ref 0 in
 		while !compteur <> 12 do
 			begin
@@ -342,11 +310,10 @@ let haut array array_prime score =
 									begin
 										array.(i).(j-1) <- array.(i).(j)+array.(i).(j-1);
 										array.(i).(j) <- 0;
-										array_prime.(i).(j) <- 0;
 										score := !score + array.(i).(j-1);
 										set_color rouge_fonce;
 										fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
-										affichage array array_prime score	
+										affichage array score	
 									end
 								else 
 									if (deplacement array.(i).(j-1) array.(i).(j) Haut) = Deplacement
@@ -354,11 +321,9 @@ let haut array array_prime score =
 										begin
 											array.(i).(j-1) <- (array.(i).(j)+array.(i).(j-1));
 											array.(i).(j) <- 0;
-											array_prime.(i).(j-1) <- 1;
-											array_prime.(i).(j) <- 0;
 											set_color rouge_fonce;
 											fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
-											affichage array array_prime score	
+											affichage array score	
 										end
 									else incr compteur;
 						done
@@ -366,7 +331,7 @@ let haut array array_prime score =
 			end
 		done;;
 		
-let bas array array_prime score = 
+let bas array score = 
 		let compteur = ref 0 in 
 		while !compteur <> 12	do 
 			begin
@@ -378,10 +343,9 @@ let bas array array_prime score =
 									begin
 										array.(i).(j+1) <- array.(i).(j)+array.(i).(j+1);
 										array.(i).(j) <- 0;
-										array_prime.(i).(j) <- 0;
 										set_color rouge_fonce;
 										fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
-										affichage array array_prime score								
+										affichage array score								
 									end
 								else 
 									if (deplacement array.(i).(j) array.(i).(j+1) Bas) = Deplacement
@@ -389,10 +353,9 @@ let bas array array_prime score =
 										begin
 											array.(i).(j+1) <- (array.(i).(j)+array.(i).(j+1));
 											array.(i).(j) <- 0;
-											array_prime.(i).(j) <- 0;
 											set_color rouge_fonce;
 											fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
-											affichage array array_prime score	
+											affichage array score	
 										end
 									else incr compteur
 						done
@@ -400,7 +363,7 @@ let bas array array_prime score =
 			end
 		done;;
 
-let droite array array_prime score = 
+let droite array score = 
 		let compteur = ref 0 in
 		while !compteur <> 12 do 
 			begin
@@ -412,10 +375,9 @@ let droite array array_prime score =
 									begin
 										array.(i+1).(j) <- array.(i).(j) + array.(i+1).(j);
 										array.(i).(j) <- 0;
-										array_prime.(i).(j) <- 0;
 										set_color rouge_fonce;
 										fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
-										affichage array array_prime score
+										affichage array score
 									end
 								else 
 									if (deplacement array.(i).(j) array.(i+1).(j) Droite) = Deplacement
@@ -423,11 +385,9 @@ let droite array array_prime score =
 										begin
 											array.(i+1).(j) <- (array.(i).(j)+array.(i+1).(j));
 											array.(i).(j) <- 0;
-											array_prime.(i+1).(j) <- 1;
-											array_prime.(i).(j) <- 0;
 											set_color rouge_fonce;
 											fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
-											affichage array array_prime score	
+											affichage array score	
 										end
 									else incr compteur
 						done
@@ -435,7 +395,7 @@ let droite array array_prime score =
 			end
 		done;;
 		
-let gauche array array_prime score = 
+let gauche array score = 
 		let compteur = ref 0 in
 		while !compteur <> 12 do
 			begin
@@ -448,10 +408,9 @@ let gauche array array_prime score =
 									begin 
 										array.(i-1).(j) <- array.(i).(j)+array.(i-1).(j);
 										array.(i).(j) <- 0;
-										array_prime.(i).(j) <- 0;
 										set_color rouge_fonce;
 										fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
-										affichage array array_prime score		
+										affichage array score		
 									end
 								else 
 									if (deplacement array.(i-1).(j) array.(i).(j) Gauche) = Deplacement
@@ -459,11 +418,9 @@ let gauche array array_prime score =
 										begin
 											array.(i-1).(j) <- (array.(i).(j)+array.(i-1).(j));
 											array.(i).(j) <- 0;
-											array_prime.(i-1).(j) <- 1;
-											array_prime.(i).(j) <- 0;
 											set_color rouge_fonce;
 											fill_rect (200 + i*150 +10) (450 - j*150 +10) 130 130;
-											affichage array array_prime score	
+											affichage array score	
 										end
 									else incr compteur
 						done
@@ -475,11 +432,11 @@ let gauche array array_prime score =
 
 		(* appelle les 4 fonctions de déplacements précédentes 
 		pour faire déplacer les cases *)
-let output_direction dir array array_prime score = match dir with 
-		|	Haut -> haut array array_prime score; new_tile array array_prime
-		| Bas -> bas array array_prime score; new_tile array array_prime
-		| Gauche -> gauche array array_prime score; new_tile array array_prime
-		| Droite -> droite array array_prime score; new_tile array array_prime
+let output_direction dir array score = match dir with 
+		|	Haut -> haut array score; new_tile array
+		| Bas -> bas array score; new_tile array
+		| Gauche -> gauche array score; new_tile array
+		| Droite -> droite array score; new_tile array
 		| Rien -> ();;
 					
 
@@ -513,6 +470,7 @@ let play_again score =
 (* ------------------ ZONE DE TEST ------------------*)
 
 
+
 (* ------------------ ZONE DE TEST -------------------*)
 
 
@@ -520,15 +478,14 @@ let play_again score =
 
 let g = let continuer = ref true in
 				let tableau = make_matrix 4 4 0 in
-				let tableau_prime = make_matrix 4 4 0 in
 				let	score = ref 0 in
 				let toucheAppuyee = ref false in
 				let touche = ref ' ' in
 						open_graph ":0";
 						resize_window 800 600;
 						initialisation score;
-						debut tableau tableau_prime;
-						affichage tableau tableau_prime score;	
+						debut tableau;
+						affichage tableau score;	
 
 						while !continuer do
 								toucheAppuyee := key_pressed();
@@ -537,14 +494,14 @@ let g = let continuer = ref true in
 										begin
 											touche := read_key();
 											
-											output_direction (direction_of_char !touche) tableau tableau_prime score;
+											output_direction (direction_of_char !touche) tableau score;
 											
-											affichage tableau tableau_prime score;
+											affichage tableau score;
 											
 											touche := ' ';
 											toucheAppuyee := false;
 										end;
-								if array_rempli tableau_prime 
+								if array_rempli tableau 
 										then if bloque tableau
 											then 
 											begin 
