@@ -1,3 +1,12 @@
+(* 
+Lorsque la fonction principale est lancée, le jeu semble
+bien fonctionner mais s'arrête à certains moments avec 
+l'erreur suivante : "font set creation failure". 
+
+J'ai essayé de la résoudre mais je n'ai pas réussi.
+*)
+
+
 #load "graphics.cma";;
 open Graphics;;
 open Random;;
@@ -15,9 +24,9 @@ open_graph ":0";;
 resize_window 800 600;;
 	
 let bleu = rgb 38 92 153;;
-let rouge = rgb 224 20 64;;
+let rouge = rgb 181 13 16;;
 let vert = rgb 27 133 3;;
-let rouge_fonce = rgb 135 42 8;;
+let rouge_fonce = rgb 204 45 48;;
 let bleu_clair = rgb 80 199 199;;
 let vert_clair = rgb 38 145 108;;
 let rose = rgb 150 47 100;;
@@ -41,8 +50,6 @@ let re4 = sound 587 1;;
 let mi4 = sound 659 1;;
 let fa4 = sound 698 1;;
 let sol4 = sound 784 1;;
-
-(* ---------- Fonctions de générateurs aléatoires ---------- *)
 
 (* Fonctions qui détermine :
 - la couleur de chaque case associée 
@@ -102,7 +109,8 @@ let direction_of_char c = match c with
 		
 (* ---------- Fonctions pour tracer le background (ce qui reste immobile du début à la fin) ---------- *)
 
-let initialisation n= 
+let initialisation () = 
+	begin
 	set_color rouge_fonce;
 	fill_rect 0 0 800 600;
 	moveto 35 500;
@@ -122,9 +130,49 @@ let initialisation n=
 			lineto (200+150*i) 600;
 			moveto 200 (150*i);
 			lineto 800 (150*i);
-		end
-	done;;
+		end;
+	done;
+	end;;
 
+(* ---------- Fonctions qui lit le tableau, l'affiche ---------- *)
+	
+		(* déplace le curseur veres la position du nombre (selon la taille du nombre) *)
+let taille_nombre nb x y = match nb with
+		| n when n < 10 -> moveto (x+60) (y+50)
+		| n when n < 100 -> moveto (x+45) (y+50)
+		| n when n < 1000 -> moveto (x+25) (y+50)
+		| _ -> set_text_size 40; moveto (x+23) (y+55);;
+
+
+let affiche_case i j nombre = 
+	begin
+		(* trace la case *)
+		set_color (couleur_case nombre);
+		fill_rect (200 + i*150 + 10) (450 - j*150 + 10) 130 130;
+		(* trace le nombre *)
+		set_color white;
+		set_text_size 50;
+		taille_nombre nombre (200 + i*150) (450 - j*150);
+		draw_string (string_of_int nombre)
+	end;;
+		
+let supprime_case i j = 
+	begin
+		set_color rouge_fonce;
+		fill_rect (200 + i*150 + 10) (450 - j*150 + 10) 130 130
+	end;;
+
+(* fonction qui affiche le score *)
+let affiche_score sc = 
+	begin
+    set_color rouge_fonce;
+		fill_rect 35 250 100 40;
+		set_color white;
+		set_text_size 25;
+		moveto 35 250;
+		draw_string (string_of_int sc)
+	end;;
+		
 (* fonction nécessaire pour être certain d'avoir des coordonnées
 différentes c'est-à-dire ne pas avoir seulement une case qui 
 apparaisse *)
@@ -139,7 +187,7 @@ let debut array = let continuer = ref true in
 				d = int 4 in
 				if verification a b c d then
 					begin
-					array.(a).(b) <- int_of_float (2.**float_of_int (int 2 + 1));
+					array.(a).(b) <- int_of_float (2.**float_of_int (int 2 + 1)); (* associe 2 ou 4 *)
 					array.(c).(d) <- int_of_float (2.**float_of_int (int 2 + 1));
 					affiche_case a b array.(a).(b);
 					affiche_case c d array.(c).(d);
@@ -148,46 +196,8 @@ let debut array = let continuer = ref true in
 				else ()
 		done;;
 		
-
-
-(* ---------- Fonctions qui lit le tableau, l'affiche ---------- *)
-	
-		(* déplace le curseur veres la position du nombre (selon la taille du nombre) *)
-let taille_nombre nb x y = match nb with
-		| n when n < 10 -> moveto (x+60) (y+50)
-		| n when n < 100 -> moveto (x+45) (y+50)
-		| n when n < 1000 -> moveto (x+25) (y+50)
-		| _ -> set_text_size 40; moveto (x+23) (y+55);;
-
-
-let affiche_case i j nombre = 
-		(* trace la case *)
-		set_color (couleur_case nombre);
-		fill_rect (200 + i*150 + 10) (450 - j*150 + 10) 130 130;
-		(* trace le nombre *)
-		set_color white;
-		set_text_size 50;
-		taille_nombre nombre (200 + i*150) (450 - j*150);
-		draw_string (string_of_int nombre);;
-		
-let supprime_case i j = 
-		set_color rouge_fonce;
-		fill_rect (200 + i*150 + 10) (450 - j*150 + 10) 130 130;;
-
-(* fonction qui affiche le score *)
-let affiche_score sc = 
-    set_color rouge_fonce;
-		fill_rect 35 250 100 40;
-		set_color white;
-		set_text_size 25;
-		moveto 35 250;
-		draw_string (string_of_int sc);;
-		
 (* ---------- Fonction qui choisit un emplacement libre random et ajoute 2 ou 4 ---------- *)
 
-		
-		(* choisit de façon random un emplacement libre 
-		et y ajoute de façon random 2 ou 4 *)
 let nouvelle_case array = 
 		let indicateur = ref true in
 		while !indicateur do
@@ -195,7 +205,7 @@ let nouvelle_case array =
 				if array.(a).(b) = 0 
 						then 
 							begin
-							array.(a).(b) <- int_of_float (2.**float_of_int (int 2 + 1));
+							array.(a).(b) <- int_of_float (2.**float_of_int (int 2 + 1)); (* génère 2 ou 4 *)
 							affiche_case a b array.(a).(b);
 							indicateur := false
 							end
@@ -206,18 +216,13 @@ let nouvelle_case array =
 		(* fonction auxiliaire utilisée dans la fonction suivante *)
 let condition_vide element = element > 0;;
 
-		(* renvoie true si le tableau est rempli 
-		NB : Utiliser let rec pour que ça soit plus beau ?
-		*)
+		(* renvoie true si le tableau est rempli *)
 let array_rempli array = 
 		for_all condition_vide array.(0) && 
 		for_all condition_vide array.(1) &&
 		for_all condition_vide array.(2) &&
 		for_all condition_vide array.(3);;
 		
-
-		(* renvoie true si le joueur n'a plus de choix possible *)
-
 		(* fonction auxiliaire qui renvoie true s'il existe 
 		deux mêmes éléments d'affilée *)
 let deux_daffilee liste = 
@@ -228,61 +233,40 @@ let deux_daffilee liste =
 					else tmp := liste.(i)
 		done;
 		!boo;;
-				
-		(* fonction qui :
-		- utilise deux_d'affilee sur les lignes. 
-		- crée une nouvelle matrice 4x4 en inversant lignes et 
-		colonnes puis utilise deux_d'affilee sur les nouvvelles
-		lignes. 
-		
-		NB : il existe sûrement un moyen plus rapide pour réaliser
-		cette fonction.
-		
-		*)
-let bloque array = 
-		let var = ref false in
-		for i = 0 to 3 do 
-				if deux_daffilee array.(i) = false 
-					then var := true 
-		done;
-		
-		if !var then !var else 
-				let tmp = ref array.(0).(0) in
-				for i = 0 to 3 do
-						for j = 1 to 3 do
-								if !tmp = array.(i).(j) then var := true
-								else tmp := array.(i).(j)
+
+
+exception GrilleBloquee;;
+
+		(* fonction qui échange lignes et colonnes *)
+let transpose grille = 
+		let grille_bis = make_matrix 4 4 0 in
+				for i = 0 to 3 do 
+						for j = 0 to 3 do 
+								grille_bis.(i).(j) <- grille.(j).(i)
 						done;
 				done;
-				!var;;
-				
-let bloque1 array = 
-		try 
-				let tmp1 = ref 1 in
-				for i = 0 to 3 do
-						for j = 0 to 3 do
-								if array.(i).(j) = tmp1 then raise Exit
-								else tmp1 := array.(i).(j)
-						done
-				done
-		with 
-				Exit -> false
-				;;
+		grille_bis;;		
 
-				
-let bloque2 array = 
-		try
-				for i = 0 to 2 do
-						for j = 0 to 2 do
-								if array.(j).(i) = array.(j).(i+1) then raise Exit 
-								else 
-						done
-				done
-		with 
-				Exit -> false;;
-				
-				
-			
+
+let lignes_bloquees array = 
+	try
+		for i = 0 to 3 do 
+				if deux_daffilee array.(i) = false 
+					then raise GrilleBloquee
+		done;
+		false;
+	with GrilleBloquee -> true;;
+		
+let colonnes_bloquees array = 
+	try 
+		let new_array = transpose array in
+		for i = 0 to 3 do 
+				if deux_daffilee new_array.(i)
+					then raise GrilleBloquee;
+		done;
+		false;
+	with GrilleBloquee -> true;;
+	
 				
 (* ---------- Fonctions qui détecte le déplacement du joueur---------- *)
 
@@ -318,17 +302,19 @@ let deplacement a b dir = match a, b with
 		changements durant ces deux boucles for, et donc que l'on peut sortir 
 		de la boucle while. *);;
 
+exception Stop;;
 let haut array score = 
-		let indicateur = ref true in
-		while !indicateur do
+	try
+		let array_collision = make_matrix 4 4 0 in
+		while true do
 			begin
-				let compteur = ref 0 and
-				array_collision = make_matrix 4 4 0 in
+				let compteur = ref 0 in
 					for j = 1 to 3 do
 							for i = 0 to 3 do
-									if (deplacement array.(i).(j-1) array.(i).(j) Haut) = Collision
-									then
-										if array_collision.(i).(j-1) = 0 (* *)
+									let dir = deplacement array.(i).(j-1) array.(i).(j) Haut in 
+									match dir with 
+									| Collision ->
+										if array_collision.(i).(j) = 0
 										then
 										begin 
 											array.(i).(j-1) <- array.(i).(j) + array.(i).(j-1);
@@ -340,36 +326,33 @@ let haut array score =
 											affiche_score !score
 										end
 										else incr compteur 
-									else 
-										if (deplacement array.(i).(j-1) array.(i).(j) Haut) = Deplacement
-											then 
-											begin
+									| Deplacement ->
+										begin
 											array.(i).(j-1) <- array.(i).(j);
 											array.(i).(j) <- 0;
 											affiche_case i (j-1) array.(i).(j-1);
 											supprime_case i j
-											end
-										else if (deplacement array.(i).(j-1) array.(i).(j) Haut) = PasDeplacement
-										then incr compteur;
+										end
+									| PasDeplacement -> incr compteur;
 							done
 					done;
-					if !compteur = 12 then indicateur := false;
+					if !compteur = 12 then raise Stop;
 			end
-		done;;
-		
+		done
+	with Stop -> ();;
 
 
 let bas array score = 
-		let indicateur = ref true in
-		while !indicateur do
+	try 
+		let array_collision = make_matrix 4 4 0 in
+		while true do
 			begin
-				let compteur = ref 0 and
-				array_collision = make_matrix 4 4 0 in
+				let compteur = ref 0 in
 					for j = 2 downto 0 do
 							for i = 0 to 3 do
-									if (deplacement array.(i).(j) array.(i).(j+1) Bas) = Collision
-									then 
-										if array_collision.(i).(j+1) = 0 then
+								let dir = deplacement array.(i).(j) array.(i).(j+1) Bas in match dir with
+									| Collision ->
+										if array_collision.(i).(j) = 0 then
 										begin
 											array.(i).(j+1) <- array.(i).(j) + array.(i).(j+1);
 											array.(i).(j) <- 0;
@@ -380,35 +363,33 @@ let bas array score =
 											affiche_score !score
 											end
 										else incr compteur
-									else if (deplacement array.(i).(j) array.(i).(j+1) Bas) = Deplacement
-										then 
+									| Deplacement ->
 										begin
 											array.(i).(j+1) <- array.(i).(j);
 											array.(i).(j) <- 0;
 											affiche_case i (j+1) array.(i).(j+1);
 											supprime_case i j
 										end
-									else if (deplacement array.(i).(j) array.(i).(j+1) Bas) = PasDeplacement
-										then incr compteur;
+									| PasDeplacement -> incr compteur;
 							done
 					done;
-					if !compteur = 12 then indicateur := false;
+					if !compteur = 12 then raise Stop;
 			end
-		done;;
-
+		done
+	with Stop -> ();;
 
 
 let droite array score = 
-		let indicateur = ref true in
-		while !indicateur do
+	try
+		let array_collision = make_matrix 4 4 0 in
+		while true do
 			begin
-				let compteur = ref 0 and
-				array_collision = make_matrix 4 4 0 in
+				let compteur = ref 0 in
 					for i = 2 downto 0 do
 							for j = 0 to 3 do
-									if (deplacement array.(i).(j) array.(i+1).(j) Droite) = Collision 
-										then 
-										if array_collision.(i+1).(j) = 0 then
+									let dir = deplacement array.(i).(j) array.(i+1).(j) Droite in match dir with
+										| Collision ->
+										if array_collision.(i).(j) = 0 then
 											begin
 												array.(i+1).(j) <- array.(i).(j) + array.(i+1).(j);
 												array.(i).(j) <- 0;
@@ -419,33 +400,32 @@ let droite array score =
 												affiche_score !score
 											end
 										else incr compteur
-									else if (deplacement array.(i).(j) array.(i+1).(j) Droite) = Deplacement
-										then 
+										| Deplacement ->
 										begin
 											array.(i+1).(j) <- array.(i).(j);
 											array.(i).(j) <- 0;
 											affiche_case (i+1) j array.(i+1).(j);
 											supprime_case i j
 										end
-									else if (deplacement array.(i).(j) array.(i+1).(j) Droite) = PasDeplacement
-										then incr compteur;
+										| PasDeplacement -> incr compteur;
 							done
 					done;
-					if !compteur = 12 then indicateur := false;
+					if !compteur = 12 then raise Stop;
 			end
-		done;;
+		done
+	with Stop -> ();;
 		
 let gauche array score = 
-		let indicateur = ref true in
-		while !indicateur do
+	try
+		let array_collision = make_matrix 4 4 0 in
+		while true do
 			begin 
-				let compteur = ref 0 and
-				array_collision = make_matrix 4 4 0 in
+				let compteur = ref 0 in
 					for i = 1 to 3 do
 							for j = 0 to 3 do
-									if (deplacement array.(i-1).(j) array.(i).(j) Gauche) = Collision
-										then 
-											if array_collision.(i-1).(j) = 1 
+									let dir = deplacement array.(i-1).(j) array.(i).(j) Gauche in match dir with
+									| Collision ->
+											if array_collision.(i).(j) = 0 
 												then
 												begin
 												array.(i-1).(j) <- array.(i).(j) + array.(i-1).(j);
@@ -457,27 +437,25 @@ let gauche array score =
 												affiche_score !score
 												end
 										else incr compteur
-									else if (deplacement array.(i-1).(j) array.(i).(j) Gauche) = Deplacement
-												then 
+									| Deplacement ->
 												begin
 												array.(i-1).(j) <- array.(i).(j);
 												array.(i).(j) <- 0;
 												affiche_case (i-1) j array.(i-1).(j);
 												supprime_case i j
 												end
-									else if (deplacement array.(i-1).(j) array.(i).(j) Gauche) = PasDeplacement
-											then incr compteur
+									| PasDeplacement -> incr compteur
 							done
 					done;
-					if !compteur = 12 then 
-						indicateur := false
+					if !compteur = 12 then raise Stop
 			end
-		done;;
+		done;
+		with Stop -> ();;
 
 
 
 
-		(* Appelle les 4 fonctions de déplacement précédentes 
+		(* appelle les 4 fonctions de déplacement précédentes 
 		puis ajoute une une nouvelle case. *)
 let output_direction dir array score = match dir with 
 		|	Haut -> haut array score; nouvelle_case array
@@ -485,105 +463,63 @@ let output_direction dir array score = match dir with
 		| Gauche -> gauche array score; nouvelle_case array
 		| Droite -> droite array score; nouvelle_case array
 		| Rien -> ();;
-					
+
+let case_suivante_libre liste element = match liste with 
+		| head::tail when element = 0 -> case_suivante_libre tail head
+		| head::tail when head = element || head = 0 -> true
+		| 
+
+		;;
+let verif_mouvement grille direction = match direction with 
+		| Droite -> 
+				let droite2 = 
+				for i = 0 to 3 do
+						
+				done;;
 
 (* ---------- Fonction qui affiche l'écran de game over ---------- *)
 
-let print_game_over n = 
+let print_game_over () = 
+	begin
     set_color vert;
     fill_rect 300 200 360 200;
 		moveto 330 280;
     set_text_size 50;
     set_color white;
-    draw_string "GAME OVER";;
-    
-(* ---------- Fonction qui affiche un bouton "PLAY AGAIN" ---------- 
-		A TERMINER*)
-
-let detecte_play_again x y w h etat= 
-	x <= etat.mouse_x && etat.mouse_x >= x+w 
-	&& y <= etat.mouse_y && etat.mouse_y >= y+h && etat.button;;
-
-let play_again score = 
-		set_color vert;
-		fill_rect 330 50 300 100;
-		moveto 370 90;
-		set_text_size 30;
-		set_color white;
-		draw_string "PLAY AGAIN";
-		if detecte_play_again 330 50 300 100 (wait_next_event Poll)
-		then initialisation score else ();;
-
-(* ------------------ ZONE DE TEST ------------------*)
-
-let h a = match a with 
-	| 0 -> set_color white; fill_rect 0 0 60 70
-	| _ -> ();;
-
-h 0;;
-
-
-let f a b = 
-		if a < b then () else ();
-		if a = b then fill_rect 0 0 30 30;;
-
-f 5 5;;
-
-let g a = let n = ref 0 in
-		for i = 0 to 3 do
-				for j = 0 to 3 do
-						incr n
-				done
-		done;
-		if a < !n then 3 else 5;;
-		
-g 5000 ;;
-
-let ff a b = 
-		set_color black;
-		if a < b then fill_rect 3 3 50 50 else ();;
-		
-ff 4 5;;
-
-(* 2 ou 4 *)
-int_of_float (2.**float_of_int (int 2 + 1));; 
-
-(* ------------------ ZONE DE TEST -------------------*)
-
+    draw_string "GAME OVER"
+   end;;
 
 
 (* ---------- Fonction main ---------- *)
 
-let g = let continuer = ref true in
-				let tableau = make_matrix 4 4 0 in
-				let	score = ref 0 in
-				let toucheAppuyee = ref false in
-				let touche = ref ' ' in
+let g = let continuer = ref true and
+				grille = make_matrix 4 4 0 and
+				score = ref 0 and
+				toucheAppuyee = ref false and
+				touche = ref ' ' in
+					begin
 						open_graph ":0";
 						resize_window 800 600;
-						initialisation 0;
-						debut tableau;
+						initialisation ();
+						debut grille;
 						affiche_score !score;	
 
 						while !continuer do
 								toucheAppuyee := key_pressed();
 								if !toucheAppuyee 
-									then 
+									then
 										begin
-											touche := read_key();
-											output_direction (direction_of_char !touche) tableau score;
-											toucheAppuyee := false
+											touche := read_key(); 
+											output_direction (direction_of_char !touche) grille score;
+											toucheAppuyee := false;
 										end
-
-										
-								(*
-								if array_rempli tableau 
-										then if bloque tableau
-											then 
-											begin 
-												print_game_over 0;
-												continuer := false
-											end;
-											*)
+									else if array_rempli grille 
+												then if lignes_bloquees grille && colonnes_bloquees grille
+														then 
+															begin 
+															print_game_over ();
+															continuer := false
+															end
 											
-						done;;
+						done;
+					end;;
